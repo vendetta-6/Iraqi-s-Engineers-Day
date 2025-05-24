@@ -26,23 +26,25 @@
     .note {
       position: absolute;
       padding: 15px;
-      cursor: pointer;
+      cursor: move;
       transition: all 0.3s ease-in-out;
+      min-width: 100px;
+      text-align: center;
     }
     .bolt-shape {
-      width: 80px;
-      height: 120px;
+      width: 100px;
+      height: 60px;
       background-color: yellow;
-      clip-path: polygon(50% 0%, 60% 30%, 40% 30%, 70% 100%, 30% 50%, 50% 50%);
+      font-size: 24px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .confirmBtn {
+    .label {
+      font-weight: bold;
       display: block;
       margin-top: 5px;
-      background: #FFD700;
-      color: black;
-      border: none;
-      padding: 5px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -52,9 +54,13 @@
   <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
     <input type="text" id="quote" placeholder="مقولتك" required />
-    <input type="file" id="photoUpload" accept="image/*"/>
+    
+    <span class="label">لون خلفية الملصق</span>
     <input type="color" id="bgColor" value="#FFD700"/> 
+    
+    <span class="label">لون النص</span>
     <input type="color" id="textColor" value="#000000"/>
+
     <select id="shapeSelect">
       <option value="square">مربع</option>
       <option value="circle">دائرة</option>
@@ -66,15 +72,34 @@
     <button type="submit">أضف قصاصتك</button>
   </form>
 
-  <input type="text" id="searchBox" placeholder="ابحث عن مقولة..." />
-  <button id="themeShuffle">تغيير المظهر</button>
-
   <div id="wall"></div>
 
   <script>
     const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
-    let floatingNote = null;
+
+    function addSticker(name, quote, bgColor, textColor, shape) {
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.style.backgroundColor = bgColor;
+      note.style.color = textColor;
+      note.textContent = `${name}: ${quote}`;
+
+      if (shape === "bolt") {
+        note.classList.add("bolt-shape");
+        note.textContent = "⚡";
+      } else if (shape === "circle") {
+        note.style.borderRadius = "50%";
+      } else if (shape === "triangle") {
+        note.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+      }
+
+      note.style.left = Math.random() * 80 + '%';
+      note.style.top = Math.random() * 80 + '%';
+
+      makeDraggable(note);
+      wall.appendChild(note);
+    }
 
     form.onsubmit = e => {
       e.preventDefault();
@@ -84,74 +109,35 @@
       const textColor = document.getElementById('textColor').value;
       const shape = document.getElementById('shapeSelect').value;
 
-      floatingNote = document.createElement('div');
-      floatingNote.className = 'note';
-      floatingNote.style.backgroundColor = bgColor;
-      floatingNote.style.color = textColor;
-
-      if (shape === "bolt") {
-        floatingNote.classList.add("bolt-shape"); // Apply actual ⚡ shape
-      } else if (shape === "circle") {
-        floatingNote.style.borderRadius = "50%";
-      } else if (shape === "triangle") {
-        floatingNote.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
-      } else {
-        floatingNote.textContent = `${name}: ${quote}`;
-      }
-
-      const confirmBtn = document.createElement('button');
-      confirmBtn.textContent = "ضع هنا";
-      confirmBtn.className = "confirmBtn";
-      floatingNote.appendChild(confirmBtn);
-
-      wall.onclick = function(e) {
-        floatingNote.style.position = "absolute";
-        floatingNote.style.left = e.pageX - wall.offsetLeft + 'px';
-        floatingNote.style.top = e.pageY - wall.offsetTop + 'px';
-      };
-
-      confirmBtn.onclick = function() {
-        wall.appendChild(floatingNote);
-        confirmBtn.remove();
-        saveStickers();
-      };
-
+      addSticker(name, quote, bgColor, textColor, shape);
       form.reset();
     };
 
-    function saveStickers() {
-      const stickers = [];
-      document.querySelectorAll('.note').forEach(note => {
-        stickers.push({
-          color: note.style.backgroundColor,
-          textColor: note.style.color,
-          shape: note.classList.contains("bolt-shape") ? "bolt" : "",
-          left: note.style.left,
-          top: note.style.top
-        });
-      });
-      localStorage.setItem('stickers', JSON.stringify(stickers));
-    }
+    function makeDraggable(el) {
+      el.onmousedown = function(e) {
+        e.preventDefault();
+        const shiftX = e.clientX - el.getBoundingClientRect().left;
+        const shiftY = e.clientY - el.getBoundingClientRect().top;
 
-    function loadStickers() {
-      const stickers = JSON.parse(localStorage.getItem('stickers') || '[]');
-      stickers.forEach(data => {
-        const note = document.createElement('div');
-        note.className = 'note';
-        note.style.backgroundColor = data.color;
-        note.style.color = data.textColor;
-        note.style.left = data.left;
-        note.style.top = data.top;
-        
-        if (data.shape === "bolt") {
-          note.classList.add("bolt-shape"); // Load ⚡ shape correctly
+        function moveAt(pageX, pageY) {
+          el.style.left = pageX - shiftX + 'px';
+          el.style.top = pageY - shiftY + 'px';
         }
 
-        wall.appendChild(note);
-      });
+        function onMouseMove(e) {
+          moveAt(e.pageX, e.pageY);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        el.onmouseup = function() {
+          document.removeEventListener('mousemove', onMouseMove);
+          el.onmouseup = null;
+        };
+      };
     }
 
-    loadStickers();
+    // Reset stickers on page update
+    localStorage.removeItem('stickers');
   </script>
 </body>
 </html>

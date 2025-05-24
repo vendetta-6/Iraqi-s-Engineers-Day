@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</title>
+  <title>ꫀꪀᏒ⦐ꫀꫀℕᴀᴛ ꪜᏒℕℕᴏꪊꪖꪶ Ꮣꪖꪶꪶ</title>
   <style>
     body {
       background: #808080;
@@ -37,14 +36,13 @@
       transition: all 0.3s ease-in-out;
       text-align: center;
     }
-    .bolt-shape {
+    .bolt-shape, .gear-shape, .triangle-shape, .wrench-shape {
       width: 80px;
-      height: 120px;
-      background-color: yellow;
+      height: 80px;
+      font-size: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
     }
     .label {
       font-weight: bold;
@@ -54,45 +52,41 @@
   </style>
 </head>
 <body>
-  <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>
-
-  <form id="noteForm">
+  <h2>ꪰ검Ꮢ⦐ꪰꪰℕᴀᴛ ꪴᏒℕℕᴏꪲꪶ Ꮣꪶꪶ</h2>  <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
-    <input type="text" id="quote" placeholder="مقولتك" required />
+    <input type="text" id="quote" placeholder="مقولتك" required /><span class="label">لون خلفية الملصق</span>
+<input type="color" id="bgColor" value="#FFD700"/> 
 
-    <span class="label">لون خلفية الملصق</span>
-    <input type="color" id="bgColor" value="#FFD700"/> 
-    
-    <span class="label">لون النص</span>
-    <input type="color" id="textColor" value="#000000"/>
+<span class="label">لون النص</span>
+<input type="color" id="textColor" value="#000000"/>
 
-    <input type="file" id="photoUpload" accept="image/*"/>
+<input type="file" id="photoUpload" accept="image/*"/>
 
-    <select id="shapeSelect">
-      <option value="square">مربع</option>
-      <option value="circle">دائرة</option>
-      <option value="triangle">📐 مثلث</option>
-      <option value="gear">⚙️ ترس</option>
-      <option value="bolt">⚡ صاعقة</option>
-      <option value="wrench">🔧 مفتاح</option>
-    </select>
-    <button type="submit">أضف قصاصتك</button>
-  </form>
+<select id="shapeSelect">
+  <option value="square">🔲 مربع</option>
+  <option value="circle">🔘 دائرة</option>
+  <option value="triangle">📐 مثلث</option>
+  <option value="gear">⚙️ ترس</option>
+  <option value="bolt">⚡ صاعقة</option>
+  <option value="wrench">🔧 مفتاح</option>
+</select>
+<button type="submit">أضف قصاصتك</button>
+<button type="button" id="printAll">طباعة الملصقات</button>
 
-  <div id="wall"></div>
-
-  <script>
+  </form>  <div id="wall"></div>  <script>
     const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
+    const printButton = document.getElementById('printAll');
 
     function createGrid() {
       for (let i = 0;  i < 100; i++) {
         const cell = document.createElement('div');
         cell.className = 'grid-cell';
+        cell.dataset.cellIndex = i;
         wall.appendChild(cell);
       }
     }
-    
+
     function addSticker(name, quote, bgColor, textColor, shape, photoFile) {
       const note = document.createElement('div');
       note.className = 'note';
@@ -100,17 +94,27 @@
       note.style.color = textColor;
       note.textContent = `${name}: ${quote}`;
 
-      if (shape === "bolt") {
-        note.classList.add("bolt-shape");
-        note.textContent = "⚡";
-      } else if (shape === "circle") {
-        note.style.borderRadius = "50%";
-      } else if (shape === "triangle") {
-        note.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
-      } else if (shape === "gear") {
-        note.textContent = "⚙️";
-      } else if (shape === "wrench") {
-        note.textContent = "🔧";
+      switch (shape) {
+        case 'circle':
+          note.style.borderRadius = '50%';
+          break;
+        case 'triangle':
+          note.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+          note.classList.add('triangle-shape');
+          note.textContent = '📐';
+          break;
+        case 'gear':
+          note.classList.add('gear-shape');
+          note.textContent = '⚙️';
+          break;
+        case 'bolt':
+          note.classList.add('bolt-shape');
+          note.textContent = '⚡';
+          break;
+        case 'wrench':
+          note.classList.add('wrench-shape');
+          note.textContent = '🔧';
+          break;
       }
 
       if (photoFile) {
@@ -126,7 +130,7 @@
 
       wall.addEventListener("click", function(e) {
         if (e.target.classList.contains("grid-cell")) {
-          e.target.appendChild(note);
+          e.target.appendChild(note.cloneNode(true));
           saveStickers();
         }
       });
@@ -152,19 +156,14 @@
           text: note.textContent,
           color: note.style.backgroundColor,
           textColor: note.style.color,
-          left: note.parentElement ? note.parentElement.dataset.cellIndex : "",
-          shape: note.classList.contains("bolt-shape") ? "bolt" : "",
+          shape: [...note.classList].filter(cls => cls.includes('-shape'))[0] || "",
         });
       });
       localStorage.setItem('stickers', JSON.stringify(stickers));
     }
 
-    function loadStickers() {
-      localStorage.removeItem('stickers'); // Reset stickers on every update
-    }
+    printButton.onclick = () => window.print();
 
     createGrid();
-    loadStickers();
-  </script>
-</body>
+  </script></body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>جدار المهندسين العراقيين</title>
+  <title>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</title>
   <style>
     body {
       background: #808080;
@@ -47,7 +47,7 @@
   </style>
 </head>
 <body>
-  <h2>جدار المهندسين العراقيين</h2>
+  <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>
 
   <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
@@ -88,15 +88,15 @@
       floatingNote.className = 'note';
       floatingNote.style.backgroundColor = bgColor;
       floatingNote.style.color = textColor;
-      floatingNote.textContent = `${name}: ${quote}`;
 
       if (shape === "bolt") {
-        floatingNote.classList.add("bolt-shape"); // Apply lightning bolt shape
-        floatingNote.textContent = "";
+        floatingNote.classList.add("bolt-shape"); // Apply actual ⚡ shape
       } else if (shape === "circle") {
         floatingNote.style.borderRadius = "50%";
       } else if (shape === "triangle") {
         floatingNote.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+      } else {
+        floatingNote.textContent = `${name}: ${quote}`;
       }
 
       const confirmBtn = document.createElement('button');
@@ -104,18 +104,10 @@
       confirmBtn.className = "confirmBtn";
       floatingNote.appendChild(confirmBtn);
 
-      document.body.appendChild(floatingNote);
-
-      document.onmousemove = function(e) {
-        floatingNote.style.position = "absolute";
-        floatingNote.style.left = e.pageX + 'px';
-        floatingNote.style.top = e.pageY + 'px';
-      };
-
       wall.onclick = function(e) {
+        floatingNote.style.position = "absolute";
         floatingNote.style.left = e.pageX - wall.offsetLeft + 'px';
         floatingNote.style.top = e.pageY - wall.offsetTop + 'px';
-        document.onmousemove = null;
       };
 
       confirmBtn.onclick = function() {
@@ -131,7 +123,6 @@
       const stickers = [];
       document.querySelectorAll('.note').forEach(note => {
         stickers.push({
-          name: note.textContent,
           color: note.style.backgroundColor,
           textColor: note.style.color,
           shape: note.classList.contains("bolt-shape") ? "bolt" : "",
@@ -153,8 +144,7 @@
         note.style.top = data.top;
         
         if (data.shape === "bolt") {
-          note.classList.add("bolt-shape"); // Load saved bolt shape
-          note.textContent = "";
+          note.classList.add("bolt-shape"); // Load ⚡ shape correctly
         }
 
         wall.appendChild(note);

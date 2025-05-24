@@ -22,24 +22,29 @@
       border: 5px solid #FFD700;
       background: #ADD8E6;
       overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+    }
+    .grid-cell {
+      border: 1px dashed rgba(0, 0, 0, 0.2);
+      position: relative;
     }
     .note {
       position: absolute;
       padding: 15px;
-      cursor: move;
+      cursor: pointer;
       transition: all 0.3s ease-in-out;
-      min-width: 100px;
       text-align: center;
     }
     .bolt-shape {
-      width: 100px;
-      height: 60px;
+      width: 80px;
+      height: 120px;
       background-color: yellow;
-      font-size: 24px;
-      text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 24px;
     }
     .label {
       font-weight: bold;
@@ -54,12 +59,14 @@
   <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
     <input type="text" id="quote" placeholder="مقولتك" required />
-    
+
     <span class="label">لون خلفية الملصق</span>
     <input type="color" id="bgColor" value="#FFD700"/> 
     
     <span class="label">لون النص</span>
     <input type="color" id="textColor" value="#000000"/>
+
+    <input type="file" id="photoUpload" accept="image/*"/>
 
     <select id="shapeSelect">
       <option value="square">مربع</option>
@@ -78,7 +85,15 @@
     const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
 
-    function addSticker(name, quote, bgColor, textColor, shape) {
+    function createGrid() {
+      for (let i = 0;  i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        wall.appendChild(cell);
+      }
+    }
+    
+    function addSticker(name, quote, bgColor, textColor, shape, photoFile) {
       const note = document.createElement('div');
       note.className = 'note';
       note.style.backgroundColor = bgColor;
@@ -92,13 +107,29 @@
         note.style.borderRadius = "50%";
       } else if (shape === "triangle") {
         note.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+      } else if (shape === "gear") {
+        note.textContent = "⚙️";
+      } else if (shape === "wrench") {
+        note.textContent = "🔧";
       }
 
-      note.style.left = Math.random() * 80 + '%';
-      note.style.top = Math.random() * 80 + '%';
+      if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          img.style.width = '80px';
+          note.appendChild(img);
+        };
+        reader.readAsDataURL(photoFile);
+      }
 
-      makeDraggable(note);
-      wall.appendChild(note);
+      wall.addEventListener("click", function(e) {
+        if (e.target.classList.contains("grid-cell")) {
+          e.target.appendChild(note);
+          saveStickers();
+        }
+      });
     }
 
     form.onsubmit = e => {
@@ -108,36 +139,32 @@
       const bgColor = document.getElementById('bgColor').value;
       const textColor = document.getElementById('textColor').value;
       const shape = document.getElementById('shapeSelect').value;
+      const photoFile = document.getElementById('photoUpload').files[0];
 
-      addSticker(name, quote, bgColor, textColor, shape);
+      addSticker(name, quote, bgColor, textColor, shape, photoFile);
       form.reset();
     };
 
-    function makeDraggable(el) {
-      el.onmousedown = function(e) {
-        e.preventDefault();
-        const shiftX = e.clientX - el.getBoundingClientRect().left;
-        const shiftY = e.clientY - el.getBoundingClientRect().top;
-
-        function moveAt(pageX, pageY) {
-          el.style.left = pageX - shiftX + 'px';
-          el.style.top = pageY - shiftY + 'px';
-        }
-
-        function onMouseMove(e) {
-          moveAt(e.pageX, e.pageY);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        el.onmouseup = function() {
-          document.removeEventListener('mousemove', onMouseMove);
-          el.onmouseup = null;
-        };
-      };
+    function saveStickers() {
+      const stickers = [];
+      document.querySelectorAll('.note').forEach(note => {
+        stickers.push({
+          text: note.textContent,
+          color: note.style.backgroundColor,
+          textColor: note.style.color,
+          left: note.parentElement ? note.parentElement.dataset.cellIndex : "",
+          shape: note.classList.contains("bolt-shape") ? "bolt" : "",
+        });
+      });
+      localStorage.setItem('stickers', JSON.stringify(stickers));
     }
 
-    // Reset stickers on page update
-    localStorage.removeItem('stickers');
+    function loadStickers() {
+      localStorage.removeItem('stickers'); // Reset stickers on every update
+    }
+
+    createGrid();
+    loadStickers();
   </script>
 </body>
 </html>

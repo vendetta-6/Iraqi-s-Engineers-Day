@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>حائط المهندسين</title>
+  <style>
+    body {
+      background: #f4f4f4;
+      font-family: sans-serif;
+      direction: rtl;
+    }
+    #wall {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+      border: 2px dashed #aaa;
+      overflow: hidden;
+    }
+    .note {
+      position: absolute;
+      background: yellow;
+      padding: 10px;
+      border: 1px solid #333;
+      cursor: move;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">حائط المهندسين العراقيين</h2>
+  <form id="noteForm">
+    <input type="text" id="name" placeholder="اسمك" required />
+    <input type="text" id="quote" placeholder="مقولتك" required />
+    <button type="submit">أضف قصاصتك</button>
+  </form>
+
+  <div id="wall"></div>
+
+  <script>
+    const form = document.getElementById('noteForm');
+    const wall = document.getElementById('wall');
+
+    form.onsubmit = e => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const quote = document.getElementById('quote').value;
+
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.textContent = name + ': ' + quote;
+
+      note.style.left = Math.random() * 80 + '%';
+      note.style.top = Math.random() * 80 + '%';
+
+      makeDraggable(note);
+      wall.appendChild(note);
+
+      form.reset();
+    };
+
+    function makeDraggable(el) {
+      el.onmousedown = function(e) {
+        e.preventDefault();
+        const shiftX = e.clientX - el.getBoundingClientRect().left;
+        const shiftY = e.clientY - el.getBoundingClientRect().top;
+
+        function moveAt(pageX, pageY) {
+          el.style.left = pageX - shiftX + 'px';
+          el.style.top = pageY - shiftY + 'px';
+        }
+
+        function onMouseMove(e) {
+          moveAt(e.pageX, e.pageY);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.onmouseup = function() {
+          document.removeEventListener('mousemove', onMouseMove);
+          el.onmouseup = null;
+        };
+      };
+    }
+  </script>
+</body>
+</html>

@@ -20,7 +20,7 @@
       height: 100vh;
       position: relative;
       border: 5px solid #FFD700;
-      background: #ADD8E6;
+      background: #ADD8E6; /* Locked to light blue */
       overflow: hidden;
     }
     .note {
@@ -31,10 +31,6 @@
     }
     .note:hover {
       transform: scale(1.1) rotate(2deg);
-    }
-    canvas {
-      border: 2px solid #333;
-      margin-top: 10px;
     }
   </style>
 </head>
@@ -58,7 +54,6 @@
     <button type="submit">أضف قصاصتك</button>
   </form>
 
-  <input type="file" id="bgUpload" accept="image/*" />
   <input type="text" id="searchBox" placeholder="ابحث عن مقولة..." />
   <button id="themeShuffle">تغيير المظهر</button>
 
@@ -67,18 +62,6 @@
   <script>
     const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
-
-    // Background Upload
-    document.getElementById('bgUpload').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          wall.style.backgroundImage = `url(${event.target.result})`;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
 
     // Memory Saving System
     function saveStickers() {
@@ -172,116 +155,6 @@
     }
 
     loadStickers();
-  </script>
-</body>
-</html>      if (photoFile) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const img = document.createElement('img');
-          img.src = event.target.result;
-          img.style.width = '100px';
-          note.appendChild(img);
-        };
-        reader.readAsDataURL(photoFile);
-      }
-
-      makeDraggable(note);
-      wall.appendChild(note);
-      form.reset();
-    };
-
-    // Making notes draggable
-    function makeDraggable(el) {
-      el.onmousedown = function(e) {
-        e.preventDefault();
-        const shiftX = e.clientX - el.getBoundingClientRect().left;
-        const shiftY = e.clientY - el.getBoundingClientRect().top;
-
-        function moveAt(pageX, pageY) {
-          el.style.left = pageX - shiftX + 'px';
-          el.style.top = pageY - shiftY + 'px';
-        }
-
-        function onMouseMove(e) {
-          moveAt(e.pageX, e.pageY);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        el.onmouseup = function() {
-          document.removeEventListener('mousemove', onMouseMove);
-          el.onmouseup = null;
-        };
-      };
-
-      const applyBtn = document.createElement('button');
-      applyBtn.textContent = "ثبت الموقع";
-      applyBtn.className = "applyBtn";
-      el.appendChild(applyBtn);
-
-      applyBtn.onclick = function() {
-        el.style.cursor = "default";
-        el.onmousedown = null;
-        applyBtn.remove();
-      };
-    }
-
-    // Like & Comment System
-    function addInteractions(note) {
-      const likeBtn = document.createElement('button');
-      likeBtn.textContent = "❤️ 0";
-      likeBtn.setAttribute('data-likes', '0');
-      likeBtn.onclick = function() {
-        let likes = parseInt(likeBtn.getAttribute('data-likes'), 10);
-        likes++;
-        likeBtn.textContent = `❤️ ${likes}`;
-        likeBtn.setAttribute('data-likes', likes);
-      };
-      note.appendChild(likeBtn);
-
-      const commentBtn = document.createElement('button');
-      commentBtn.textContent = "💬 تعليق";
-      commentBtn.onclick = function() {
-        const commentBox = document.createElement('textarea');
-        commentBox.placeholder = "أضف تعليقًا...";
-        note.appendChild(commentBox);
-      };
-      note.appendChild(commentBtn);
-    }
-
-    // Search System
-    document.getElementById('searchBox').addEventListener('input', function() {
-      const searchTerm = this.value.toLowerCase();
-      document.querySelectorAll('.note').forEach(note => {
-        note.style.display = note.textContent.toLowerCase().includes(searchTerm) ? 'block' : 'none';
-      });
-    });
-
-    // Theme Shuffle
-    document.getElementById('themeShuffle').addEventListener('click', function() {
-      const themes = ["#2E2E2E", "#004E98", "#F7B801", "#FF6363"];
-      wall.style.backgroundColor = themes[Math.floor(Math.random() * themes.length)];
-    });
-
-    // Drawing Area
-    const canvas = document.getElementById('drawArea');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 500;
-    canvas.height = 300;
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    canvas.onmousedown = function(e) {
-      ctx.beginPath();
-      ctx.moveTo(e.offsetX, e.offsetY);
-      canvas.onmousemove = function(ev) {
-        ctx.lineTo(ev.offsetX, ev.offsetY);
-        ctx.stroke();
-      };
-      document.onmouseup = function() {
-        canvas.onmousemove = null;
-        document.onmouseup = null;
-      };
-    };
   </script>
 </body>
 </html>

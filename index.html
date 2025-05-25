@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -10,6 +9,7 @@
       font-family: sans-serif;
       direction: rtl;
       text-align: center;
+      margin: 0;
     }
     h2 {
       color: white;
@@ -18,180 +18,176 @@
     #wall {
       width: 100%;
       height: 100vh;
-      position: relative;
-      border: 5px solid #FFD700;
-      background: #ADD8E6;
-      overflow: hidden;
       display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      grid-template-rows: repeat(10, 1fr);
+      grid-template-columns: repeat(10, 100px);
+      grid-template-rows: repeat(10, 100px);
+      gap: 10px;
+      justify-content: center;
+      align-content: center;
+      background: #ADD8E6;
+      border: 5px solid #FFD700;
+      position: relative;
     }
     .grid-cell {
-      border: 1px dashed rgba(0, 0, 0, 0.2);
+      border: 1px dashed rgba(0, 0, 0, 0.1);
       position: relative;
     }
     .note {
-      position: absolute;
-      padding: 15px;
-      cursor: pointer;
-      transition: all 0.3s ease-in-out;
-      text-align: center;
-    }
-    .bolt-shape {
-      width: 80px;
-      height: 120px;
-      background-color: yellow;
+      width: 100%;
+      height: 100%;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      position: absolute;
+      padding: 5px;
+      box-sizing: border-box;
+      transition: all 0.3s ease-in-out;
+      text-align: center;
+      font-size: 14px;
     }
-    .label {
-      font-weight: bold;
-      display: block;
+    .note .author {
       margin-top: 5px;
+      font-size: 12px;
+      background: #fff;
+      border: 1px solid #000;
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: #333;
+    }
+    #noteForm {
+      margin-bottom: 10px;
+    }
+    .circle-shape {
+      border-radius: 50%;
+    }
+    .square-shape {
+      border-radius: 0;
+    }
+    button {
+      margin: 5px;
     }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
-  <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>
-
-  <form id="noteForm">
+  <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>  <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
     <input type="text" id="quote" placeholder="مقولتك" required />
-
     <span class="label">لون خلفية الملصق</span>
     <input type="color" id="bgColor" value="#FFD700"/> 
-
     <span class="label">لون النص</span>
     <input type="color" id="textColor" value="#000000"/>
-
-    <input type="file" id="photoUpload" accept="image/*"/>
-
     <select id="shapeSelect">
       <option value="square">🔲 مربع</option>
       <option value="circle">🔘 دائرة</option>
-      <option value="triangle">📐 مثلث</option>
-      <option value="gear">⚙️ ترس</option>
-      <option value="bolt">⚡ صاعقة</option>
-      <option value="wrench">🔧 مفتاح</option>
     </select>
-    <button type="submit">أضف قصاصتك</button>
-  </form>
+    <button type="button" id="addStickerBtn">أضف ملصقك</button>
+    <button type="button" id="printStickerBtn">اطبع ملصقك</button>
+  </form>  <div id="wall"></div>  <script>
+    // Firebase init
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8vpK9-kFWdXcbab55hCw11Qm730TQv04",
+      authDomain: "engwall-b14d1.firebaseapp.com",
+      databaseURL: "https://engwall-b14d1-default-rtdb.firebaseio.com",
+      projectId: "engwall-b14d1",
+      storageBucket: "engwall-b14d1.appspot.com",
+      messagingSenderId: "11083728804",
+      appId: "1:11083728804:web:21b7730b4a3ff87c22e331",
+      measurementId: "G-30LKE50G3X"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-  <div id="wall"></div>
-
-  <script>
-    const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
+    const form = document.getElementById('noteForm');
+    const addStickerBtn = document.getElementById('addStickerBtn');
+    const printStickerBtn = document.getElementById('printStickerBtn');
 
     function createGrid() {
-      for (let i = 0;  i < 100; i++) {
+      for (let i = 0; i < 100; i++) {
         const cell = document.createElement('div');
         cell.className = 'grid-cell';
+        cell.dataset.index = i;
         wall.appendChild(cell);
       }
     }
 
-    function addSticker(name, quote, bgColor, textColor, shape, photoFile) {
+    function renderSticker(data, permanent = false) {
       const note = document.createElement('div');
       note.className = 'note';
-      note.style.backgroundColor = bgColor;
-      note.style.color = textColor;
-      note.textContent = `${name}: ${quote}`;
+      note.style.backgroundColor = data.bgColor;
+      note.style.color = data.textColor;
+      if (data.shape === 'circle') note.classList.add('circle-shape');
+      else note.classList.add('square-shape');
 
-      if (shape === "bolt") {
-        note.classList.add("bolt-shape");
-        note.textContent = "⚡";
-      } else if (shape === "circle") {
-        note.style.borderRadius = "50%";
-      } else if (shape === "triangle") {
-        note.style.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
-      } else if (shape === "gear") {
-        note.textContent = "⚙️";
-      } else if (shape === "wrench") {
-        note.textContent = "🔧";
+      const quote = document.createElement('div');
+      quote.textContent = data.quote;
+      note.appendChild(quote);
+
+      const nameTag = document.createElement('div');
+      nameTag.textContent = data.name;
+      nameTag.className = 'author';
+      note.appendChild(nameTag);
+
+      const cell = wall.querySelector(`.grid-cell[data-index='${data.cell}']`);
+      if (cell && cell.children.length === 0) {
+        cell.appendChild(note);
       }
 
-      if (photoFile) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const img = document.createElement('img');
-          img.src = event.target.result;
-          img.style.width = '80px';
-          note.appendChild(img);
-        };
-        reader.readAsDataURL(photoFile);
+      if (permanent) {
+        database.ref('stickers').push(data);
       }
-
-      wall.addEventListener("click", function(e) {
-        if (e.target.classList.contains("grid-cell")) {
-          e.target.appendChild(note);
-          saveStickers();
-        }
-      });
-    }
-
-    form.onsubmit = e => {
-      e.preventDefault();
-      const name = document.getElementById('name').value;
-      const quote = document.getElementById('quote').value;
-      const bgColor = document.getElementById('bgColor').value;
-      const textColor = document.getElementById('textColor').value;
-      const shape = document.getElementById('shapeSelect').value;
-      const photoFile = document.getElementById('photoUpload').files[0];
-
-      addSticker(name, quote, bgColor, textColor, shape, photoFile);
-      form.reset();
-    };
-
-    function saveStickers() {
-      const stickers = [];
-      document.querySelectorAll('.note').forEach(note => {
-        stickers.push({
-          text: note.textContent,
-          color: note.style.backgroundColor,
-          textColor: note.style.color,
-          left: note.parentElement ? note.parentElement.dataset.cellIndex : "",
-          shape: note.classList.contains("bolt-shape") ? "bolt" : "",
-        });
-      });
-      localStorage.setItem('stickers', JSON.stringify(stickers));
     }
 
     function loadStickers() {
-      localStorage.removeItem('stickers'); // Reset stickers on every update
+      database.ref('stickers').once('value', snapshot => {
+        snapshot.forEach(child => {
+          renderSticker(child.val());
+        });
+      });
     }
+
+    let selectedCell = null;
+    wall.addEventListener('click', e => {
+      if (e.target.classList.contains('grid-cell')) {
+        selectedCell = e.target.dataset.index;
+        alert("الآن اضغط على زر إضافة أو طباعة الملصق");
+      }
+    });
+
+    addStickerBtn.onclick = () => {
+      if (!selectedCell) return alert("اختر مكانًا أولاً");
+      const data = {
+        name: document.getElementById('name').value,
+        quote: document.getElementById('quote').value,
+        bgColor: document.getElementById('bgColor').value,
+        textColor: document.getElementById('textColor').value,
+        shape: document.getElementById('shapeSelect').value,
+        cell: selectedCell
+      };
+      renderSticker(data);
+      form.reset();
+      selectedCell = null;
+    };
+
+    printStickerBtn.onclick = () => {
+      if (!selectedCell) return alert("اختر مكانًا أولاً");
+      const data = {
+        name: document.getElementById('name').value,
+        quote: document.getElementById('quote').value,
+        bgColor: document.getElementById('bgColor').value,
+        textColor: document.getElementById('textColor').value,
+        shape: document.getElementById('shapeSelect').value,
+        cell: selectedCell
+      };
+      renderSticker(data, true);
+      form.reset();
+      selectedCell = null;
+    };
 
     createGrid();
     loadStickers();
-  </script>
-  <!-- Firebase SDK -->
-<script type="module">
-  // استيراد مكتبات Firebase من CDN
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-  import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  // إعدادات Firebase الخاصة بمشروعك
-  const firebaseConfig = {
-    apiKey: "AIzaSyB8vpK9-kFWdXcbab55hCw11Qm730TQv04",
-    authDomain: "engwall-b14d1.firebaseapp.com",
-    projectId: "engwall-b14d1",
-    storageBucket: "engwall-b14d1.firebasestorage.app",
-    messagingSenderId: "11083728804",
-    appId: "1:11083728804:web:21b7730b4a3ff87c22e331",
-    measurementId: "G-30LKE50G3X"
-  };
-
-  // تهيئة Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const db = getFirestore(app);
-
-  // تقدر تضيف الكود اللي يخزن ويعرض الملصقات هنا
-  console.log("Firebase is connected!");
-
-</script>
-</body>
+  </script></body>
 </html>

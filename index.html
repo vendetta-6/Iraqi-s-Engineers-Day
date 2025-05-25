@@ -9,8 +9,6 @@
       font-family: sans-serif;
       direction: rtl;
       text-align: center;
-      margin: 0;
-      padding: 0;
     }
     h2 {
       color: white;
@@ -31,49 +29,44 @@
       border: 1px dashed rgba(0, 0, 0, 0.2);
       position: relative;
     }
-    .grid-hidden .grid-cell {
-      border: none;
-    }
     .note {
       position: absolute;
-      padding: 10px;
+      padding: 15px;
       cursor: pointer;
       transition: all 0.3s ease-in-out;
       text-align: center;
-      box-sizing: border-box;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+    .label {
+      font-weight: bold;
+      display: block;
+      margin-top: 5px;
+    }
+    .author {
+      font-size: 12px;
+      color: #333;
+      background: #fff8c6;
+      border: 1px solid #00000033;
+      padding: 2px 6px;
+      border-radius: 5px;
     }
     .circle {
       border-radius: 50%;
+      width: 100px;
+      height: 100px;
     }
-    .note .author {
-      margin-top: 5px;
-      padding: 2px 4px;
-      background-color: white;
-      border: 1px solid #000;
-      border-radius: 5px;
-      color: #444;
-      font-size: 12px;
-    }
-    #images {
-      position: absolute;
-      width: 100%;
-      top: 0;
-      left: 0;
-      display: flex;
-      justify-content: space-between;
-      padding: 10px;
-    }
-    #images img {
-      height: 50px;
+    .square {
+      width: 100px;
+      height: 100px;
     }
   </style>
 </head>
 <body>
-  <div id="images">
-    <img src="https://i.imgur.com/iZTtm3O.jpeg" alt="Right Image" style="margin-left: auto;">
-    <img src="https://i.imgur.com/NWowfvr.png" alt="Left Image" style="margin-right: auto;">
-  </div>  <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>  <form id="noteForm">
+  <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>  <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
     <input type="text" id="quote" placeholder="مقولتك" required /><span class="label">لون خلفية الملصق</span>
 <input type="color" id="bgColor" value="#FFD700"/> 
@@ -87,117 +80,90 @@
   <option value="square">🔲 مربع</option>
   <option value="circle">🔘 دائرة</option>
 </select>
-<button type="submit">أضف ملصق</button>
-<button type="button" id="printStickerBtn">طباعة الملصق</button>
+<button type="submit">أضف قصاصتك</button>
 
-  </form>  <div id="wall" class="grid-hidden"></div>  <script>
+  </form>  <div id="wall"></div>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8vpK9-kFWdXcbab55hCw11Qm730TQv04",
+      authDomain: "engwall-b14d1.firebaseapp.com",
+      projectId: "engwall-b14d1",
+      storageBucket: "engwall-b14d1.firebasestorage.app",
+      messagingSenderId: "11083728804",
+      appId: "1:11083728804:web:21b7730b4a3ff87c22e331",
+      measurementId: "G-30LKE50G3X"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
     const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
-    const printStickerBtn = document.getElementById('printStickerBtn');
-    let lastNote = null;
 
     function createGrid() {
-      for (let i = 0;  i < 100; i++) {
+      for (let i = 0; i < 100; i++) {
         const cell = document.createElement('div');
         cell.className = 'grid-cell';
-        cell.dataset.index = i;
         wall.appendChild(cell);
       }
     }
 
-    function addSticker(name, quote, bgColor, textColor, shape, photoFile, permanent = false) {
+    function addStickerToDOM(data) {
       const note = document.createElement('div');
-      note.className = 'note';
-      note.style.backgroundColor = bgColor;
-      note.style.color = textColor;
-      note.classList.add(shape);
+      note.className = `note ${data.shape}`;
+      note.style.backgroundColor = data.bgColor;
+      note.style.color = data.textColor;
 
-      note.innerHTML = `
-        <div>${quote}</div>
-        <div class="author">${name}</div>
-      `;
+      const quoteEl = document.createElement('div');
+      quoteEl.textContent = data.quote;
+      const nameEl = document.createElement('div');
+      nameEl.className = 'author';
+      nameEl.textContent = data.name;
 
-      if (photoFile) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const img = document.createElement('img');
-          img.src = event.target.result;
-          img.style.width = '50px';
-          img.style.display = 'block';
-          note.insertBefore(img, note.firstChild);
-        };
-        reader.readAsDataURL(photoFile);
-      }
+      note.appendChild(quoteEl);
+      note.appendChild(nameEl);
 
-      wall.classList.remove('grid-hidden');
+      wall.appendChild(note);
 
-      wall.querySelectorAll('.grid-cell').forEach(cell => {
-        if (!cell.hasChildNodes()) {
-          cell.onclick = () => {
-            if (!cell.hasChildNodes()) {
-              cell.appendChild(note);
-              if (permanent) saveStickers();
-              lastNote = note;
-              wall.classList.add('grid-hidden');
-              form.reset();
-            }
-          };
-        }
-      });
+      // توزيع عشوائي يمنع التراكب
+      const randX = Math.random() * (wall.offsetWidth - 120);
+      const randY = Math.random() * (wall.offsetHeight - 120);
+      note.style.left = `${randX}px`;
+      note.style.top = `${randY}px`;
     }
 
-    form.onsubmit = e => {
+    form.onsubmit = async (e) => {
       e.preventDefault();
       const name = document.getElementById('name').value;
       const quote = document.getElementById('quote').value;
       const bgColor = document.getElementById('bgColor').value;
       const textColor = document.getElementById('textColor').value;
       const shape = document.getElementById('shapeSelect').value;
-      const photoFile = document.getElementById('photoUpload').files[0];
 
-      addSticker(name, quote, bgColor, textColor, shape, photoFile);
-    };
-
-    printStickerBtn.onclick = () => {
-      if (lastNote && lastNote.parentElement) {
-        saveStickers();
-      }
-    };
-
-    function saveStickers() {
-      const stickers = [];
-      document.querySelectorAll('.note').forEach(note => {
-        const parentIndex = note.parentElement?.dataset.index;
-        if (parentIndex !== undefined) {
-          stickers.push({
-            html: note.innerHTML,
-            color: note.style.backgroundColor,
-            textColor: note.style.color,
-            shape: note.classList.contains('circle') ? 'circle' : 'square',
-            index: parentIndex
-          });
-        }
+      await addDoc(collection(db, "stickers"), {
+        name,
+        quote,
+        bgColor,
+        textColor,
+        shape
       });
-      localStorage.setItem('stickers', JSON.stringify(stickers));
-    }
 
-    function loadStickers() {
-      const data = JSON.parse(localStorage.getItem('stickers') || '[]');
-      data.forEach(sticker => {
-        const cell = wall.querySelector(`[data-index='${sticker.index}']`);
-        if (cell && !cell.hasChildNodes()) {
-          const note = document.createElement('div');
-          note.className = 'note';
-          note.style.backgroundColor = sticker.color;
-          note.style.color = sticker.textColor;
-          note.classList.add(sticker.shape);
-          note.innerHTML = sticker.html;
-          cell.appendChild(note);
-        }
-      });
-    }
+      form.reset();
+    };
 
     createGrid();
-    loadStickers();
+
+    // تحميل الملصقات عند دخول الموقع
+    onSnapshot(collection(db, "stickers"), (snapshot) => {
+      wall.innerHTML = "";
+      createGrid();
+      snapshot.forEach(doc => {
+        addStickerToDOM(doc.data());
+      });
+    });
   </script></body>
 </html>

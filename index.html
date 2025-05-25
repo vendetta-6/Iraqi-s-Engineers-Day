@@ -26,62 +26,61 @@
       grid-template-rows: repeat(10, 1fr);
     }
     .grid-cell {
-      border: 1px dashed rgba(0, 0, 0, 0.2);
       position: relative;
-    }
-    .hidden-grid .grid-cell {
-      border: none;
     }
     .note {
       position: absolute;
-      padding: 10px;
+      padding: 15px;
       cursor: pointer;
+      transition: all 0.3s ease-in-out;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      word-wrap: break-word;
-    }
-    .note .author {
-      margin-top: 5px;
-      font-size: 12px;
-      background: #fff;
-      color: #333;
-      padding: 2px 6px;
-      border-radius: 6px;
-      border: 1px solid #999;
+      font-size: 14px;
     }
     .shape-square {
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
     }
     .shape-circle {
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
     }
-    .shape-triangle {
-      width: 0;
-      height: 0;
-      border-left: 40px solid transparent;
-      border-right: 40px solid transparent;
-      border-bottom: 80px solid yellow;
-      background: none;
-      padding: 0;
-    }
-    .shape-triangle-content {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 80px;
-      text-align: center;
+    .note-name {
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      padding: 2px 6px;
+      margin-bottom: 5px;
+      border: 1px solid gray;
+      border-radius: 6px;
       font-size: 12px;
+    }
+    #rightImage, #leftImage {
+      position: absolute;
+      top: 10px;
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid gold;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+    }
+    #rightImage {
+      right: 10px;
+    }
+    #leftImage {
+      left: 10px;
     }
   </style>
 </head>
 <body>
+  <img id="rightImage" src="https://i.imgur.com/iZTtm3O.jpeg" alt="شعار يمين">
+  <img id="leftImage" src="https://i.imgur.com/NWowfvr.png" alt="شعار يسار">
   <h2>ꫀꪀᧁⅈꪀꫀꫀ𝕣ડ ꪜⅈ𝕣𝕥ꪊꪖꪶ ᭙ꪖꪶꪶ</h2>  <form id="noteForm">
     <input type="text" id="name" placeholder="اسمك" required />
     <input type="text" id="quote" placeholder="مقولتك" required /><span class="label">لون خلفية الملصق</span>
@@ -95,82 +94,55 @@
 <select id="shapeSelect">
   <option value="square">🔲 مربع</option>
   <option value="circle">🔘 دائرة</option>
-  <option value="triangle">📐 مثلث</option>
 </select>
 
 <button type="submit">أضف قصاصتك</button>
-<button type="button" id="toggleGrid">إظهار/إخفاء الشبكة</button>
-<button type="button" id="printSticker">طباعة الستكر</button>
 
-  </form>  <div id="wall" class="hidden-grid"></div>  <script>
+  </form>  <div id="wall"></div>  <script>
     const form = document.getElementById('noteForm');
     const wall = document.getElementById('wall');
-    const toggleGridBtn = document.getElementById('toggleGrid');
-    const printBtn = document.getElementById('printSticker');
 
     function createGrid() {
-      for (let i = 0;  i < 100; i++) {
+      for (let i = 0; i < 100; i++) {
         const cell = document.createElement('div');
         cell.className = 'grid-cell';
-        cell.dataset.cellIndex = i;
         wall.appendChild(cell);
       }
     }
 
-    toggleGridBtn.onclick = () => {
-      wall.classList.toggle("hidden-grid");
-    };
+    function addSticker(name, quote, bgColor, textColor, shape, photoFile) {
+      const note = document.createElement('div');
+      note.className = 'note shape-' + shape;
+      note.style.backgroundColor = bgColor;
+      note.style.color = textColor;
 
-    function addSticker(name, quote, bgColor, textColor, shape, photoFile, permanent = false) {
-      let note;
-      if (shape === "triangle") {
-        note = document.createElement("div");
-        note.className = "note shape-triangle";
-        const content = document.createElement("div");
-        content.className = "shape-triangle-content";
-        content.style.color = textColor;
-        content.innerHTML = `<div>${quote}</div><div class='author'>${name}</div>`;
-        note.appendChild(content);
-      } else {
-        note = document.createElement("div");
-        note.className = `note shape-${shape}`;
-        note.style.backgroundColor = bgColor;
-        note.style.color = textColor;
-        note.innerHTML = `<div>${quote}</div><div class='author'>${name}</div>`;
-        if (photoFile) {
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            img.style.width = '60px';
-            note.insertBefore(img, note.firstChild);
-          };
-          reader.readAsDataURL(photoFile);
-        }
+      const nameLabel = document.createElement('div');
+      nameLabel.className = 'note-name';
+      nameLabel.textContent = name;
+      note.appendChild(nameLabel);
+
+      const quoteLabel = document.createElement('div');
+      quoteLabel.textContent = quote;
+      note.appendChild(quoteLabel);
+
+      if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          img.style.width = '60px';
+          img.style.marginTop = '5px';
+          note.appendChild(img);
+        };
+        reader.readAsDataURL(photoFile);
       }
 
-      wall.addEventListener("click", function handler(e) {
-        if (e.target.classList.contains("grid-cell")) {
-          e.target.appendChild(note);
-          wall.removeEventListener("click", handler);
-          if (permanent) {
-            saveStickers();
-          }
-        }
-      });
+      const emptyCell = [...document.querySelectorAll('.grid-cell')].find(cell => cell.children.length === 0);
+      if (emptyCell) {
+        emptyCell.appendChild(note);
+        saveStickers();
+      }
     }
-
-    printBtn.onclick = () => {
-      const name = document.getElementById('name').value;
-      const quote = document.getElementById('quote').value;
-      const bgColor = document.getElementById('bgColor').value;
-      const textColor = document.getElementById('textColor').value;
-      const shape = document.getElementById('shapeSelect').value;
-      const photoFile = document.getElementById('photoUpload').files[0];
-
-      addSticker(name, quote, bgColor, textColor, shape, photoFile, true);
-      form.reset();
-    };
 
     form.onsubmit = e => {
       e.preventDefault();
@@ -186,29 +158,39 @@
     };
 
     function saveStickers() {
-      const stickers = [];
-      document.querySelectorAll(".grid-cell").forEach((cell, index) => {
-        const note = cell.querySelector(".note");
-        if (note) {
-          stickers.push({
-            cellIndex: index,
-            content: note.innerHTML,
-            className: note.className,
-            style: note.getAttribute("style") || ""
-          });
-        }
+      const saved = [];
+      document.querySelectorAll('.grid-cell .note').forEach(note => {
+        const parentIndex = [...note.parentElement.parentElement.children].indexOf(note.parentElement);
+        saved.push({
+          name: note.querySelector('.note-name').textContent,
+          quote: note.childNodes[1].textContent,
+          bgColor: note.style.backgroundColor,
+          textColor: note.style.color,
+          shape: [...note.classList].find(c => c.startsWith('shape-')),
+          index: parentIndex
+        });
       });
-      localStorage.setItem("stickers", JSON.stringify(stickers));
+      localStorage.setItem('stickers', JSON.stringify(saved));
     }
 
     function loadStickers() {
-      const saved = JSON.parse(localStorage.getItem("stickers") || "[]");
-      saved.forEach(sticker => {
-        const cell = wall.querySelector(`.grid-cell[data-cell-index='${sticker.cellIndex}']`);
-        const note = document.createElement("div");
-        note.className = sticker.className;
-        note.innerHTML = sticker.content;
-        if (sticker.style) note.setAttribute("style", sticker.style);
+      const saved = JSON.parse(localStorage.getItem('stickers') || '[]');
+      saved.forEach(data => {
+        const cell = wall.children[data.index];
+        const note = document.createElement('div');
+        note.className = 'note ' + data.shape;
+        note.style.backgroundColor = data.bgColor;
+        note.style.color = data.textColor;
+
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'note-name';
+        nameLabel.textContent = data.name;
+        note.appendChild(nameLabel);
+
+        const quoteLabel = document.createElement('div');
+        quoteLabel.textContent = data.quote;
+        note.appendChild(quoteLabel);
+
         cell.appendChild(note);
       });
     }
